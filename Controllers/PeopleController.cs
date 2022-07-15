@@ -16,7 +16,8 @@ namespace Testapi.Controllers
     public class PeopleController : ControllerBase
     {
         private readonly PeopleContext _context;
-        private static Mapper mapper = new Mapper(new MapperConfiguration(cfg => cfg.CreateMap<Person, PersonDTO>()));
+        private static Mapper Mapper = new Mapper(new MapperConfiguration(cfg => cfg.CreateMap<Person, PersonDTO>()));
+        private static Mapper InverseMapper = new Mapper(new MapperConfiguration(cfg => cfg.CreateMap<PersonDTO, Person>()));
         private readonly IMapper _mapper;
 
         public PeopleController(PeopleContext context, IMapper mapper)
@@ -72,9 +73,9 @@ namespace Testapi.Controllers
                 return NotFound();
             }
 
-            person = _mapper.Map<Person>(personDTO);
-
-            // _context.Entry(person).State = EntityState.Modified; // OK, this throws an exception
+            var PersonUpdated = InverseMapper.Map<Person>(personDTO);
+            _context.Entry(person).State = EntityState.Detached;
+            _context.Entry(PersonUpdated).State = EntityState.Modified; // This throws an exception if I don't deatach the previous instance
 
             try
             {
@@ -100,7 +101,7 @@ namespace Testapi.Controllers
         [HttpPost]
         public async Task<ActionResult<PersonDTO>> PostPerson(PersonDTO personDTO)
         {
-            var person = _mapper.Map<Person>(personDTO);
+            var person = InverseMapper.Map<Person>(personDTO);
             // var person = new Person
             // {
             //     Id = personDTO.Id,
@@ -143,6 +144,6 @@ namespace Testapi.Controllers
             return (_context.People?.Any(e => e.Id == id)).GetValueOrDefault();
         }
 
-        private static PersonDTO PersonToDTO(Person todoItem) => mapper.Map<PersonDTO>(todoItem);
+        private static PersonDTO PersonToDTO(Person todoItem) => Mapper.Map<PersonDTO>(todoItem);
     }
 }

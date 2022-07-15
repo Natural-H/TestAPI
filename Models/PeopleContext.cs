@@ -9,7 +9,10 @@ public class PeopleContext : DbContext
     public PeopleContext( /*DbContextOptions options */ ) /* : base(options) */ { }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseNpgsql(@"Host=localhost;Username=postgres;Password=password;Database=yes");
+    {
+        optionsBuilder.UseNpgsql(@"Host=localhost;Username=postgres;Password=password;Database=yes");
+        optionsBuilder.EnableSensitiveDataLogging();
+    }
 
     public DbSet<Person> People { get; set; } = null!;
 }

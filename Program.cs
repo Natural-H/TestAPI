@@ -19,6 +19,7 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+await context.Database.EnsureDeletedAsync();
 await context.Database.EnsureCreatedAsync();
 var app = builder.Build();
 
