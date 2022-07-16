@@ -15,4 +15,5 @@ public class PeopleContext : DbContext
     }
 
     public DbSet<Person> People { get; set; } = null!;
+    public DbSet<Address> Addresses { get; set; } = null!;
 }

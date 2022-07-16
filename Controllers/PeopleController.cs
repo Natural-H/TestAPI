@@ -17,7 +17,6 @@ namespace Testapi.Controllers
     {
         private readonly PeopleContext _context;
         private static Mapper Mapper = new Mapper(new MapperConfiguration(cfg => cfg.CreateMap<Person, PersonDTO>()));
-        private static Mapper InverseMapper = new Mapper(new MapperConfiguration(cfg => cfg.CreateMap<PersonDTO, Person>()));
         private readonly IMapper _mapper;
 
         public PeopleController(PeopleContext context, IMapper mapper)
@@ -39,6 +38,17 @@ namespace Testapi.Controllers
                 .ToListAsync();
         }
 
+        // GET: api/People/addresses
+        [HttpGet("addresses")]
+        public async Task<ActionResult<IEnumerable<Address>>> GetAddresses()
+        {
+            if (_context.Addresses == null)
+            {
+                return NotFound();
+            }
+            return await _context.Addresses.ToListAsync();
+        }
+
         // GET: api/People/5
         [HttpGet("{id}")]
         public async Task<ActionResult<PersonDTO>> GetPerson(int id)
@@ -57,6 +67,44 @@ namespace Testapi.Controllers
             return PersonToDTO(person);
         }
 
+        // GET: api/People/addresses/5
+        [HttpGet("addresses/{id}")]
+        public async Task<ActionResult<Address>> GetAddress(int id)
+        {
+            if (_context.Addresses == null)
+            {
+                return NotFound();
+            }
+            var address = await _context.Addresses.FindAsync(id);
+
+            if (address == null)
+            {
+                return NotFound();
+            }
+
+            return address;
+        }
+
+        // GET: api/People/5/addresses
+        [HttpGet("{id}/addresses")]
+        public async Task<ActionResult<IEnumerable<Address>>> GetPersonAddresses(int id)
+        {
+            if (_context.People == null)
+            {
+                return NotFound();
+            }
+            var person = await _context.People.FindAsync(id);
+
+            if (person == null)
+            {
+                return NotFound();
+            }
+
+            return await _context.Addresses
+                .Where(x => x.PersonId.Equals(person.Id))
+                .ToListAsync(); // Is there a better way to do this?
+        }
+
         // PUT: api/People/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
@@ -73,9 +121,17 @@ namespace Testapi.Controllers
                 return NotFound();
             }
 
-            var PersonUpdated = InverseMapper.Map<Person>(personDTO);
+            var UpdatedPerson = _mapper.Map<Person>(personDTO);
             _context.Entry(person).State = EntityState.Detached;
-            _context.Entry(PersonUpdated).State = EntityState.Modified; // This throws an exception if I don't deatach the previous instance
+
+            foreach (var address in UpdatedPerson.Addresses)
+            {
+                var UpdatedAddress = address;
+                _context.Entry(address).State = EntityState.Detached;
+                _context.Entry(UpdatedAddress).State = EntityState.Modified; // This throws an exception if I don't deatach the previous instance
+            }
+
+            _context.Entry(UpdatedPerson).State = EntityState.Modified; // This throws an exception if I don't deatach the previous instance
 
             try
             {
@@ -101,13 +157,7 @@ namespace Testapi.Controllers
         [HttpPost]
         public async Task<ActionResult<PersonDTO>> PostPerson(PersonDTO personDTO)
         {
-            var person = InverseMapper.Map<Person>(personDTO);
-            // var person = new Person
-            // {
-            //     Id = personDTO.Id,
-            //     Name = personDTO.Name,
-            //     Adresses = personDTO.Adresses
-            // };
+            var person = _mapper.Map<Person>(personDTO);
 
             if (_context.People == null)
             {
@@ -117,6 +167,26 @@ namespace Testapi.Controllers
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetPerson), new { id = person.Id }, PersonToDTO(person));
+        }
+
+        // POST: api/People/5
+        [HttpPost("{id}")]
+        public async Task<ActionResult<Address>> PostAddress(int id, Address address)
+        {
+            // var person = _mapper.Map<Person>(personDTO);
+
+            if (_context.Addresses == null)
+            {
+                return Problem("Entity set 'PeopleContext.Addresses'  is null.");
+            }
+            var person = await _context.People.FindAsync(id);
+            if (person == null)
+                return NotFound();
+            
+            person.Addresses.Add(address);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetAddress), new { id = address.Id }, address);
         }
 
         // DELETE: api/People/5
@@ -134,6 +204,36 @@ namespace Testapi.Controllers
             }
 
             _context.People.Remove(person);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        // DELETE: api/People/5/2
+        [HttpDelete("{PersonId}/{AddressId}")]
+        public async Task<IActionResult> DeleteAddress(int PersonId, int AddressId)
+        {
+            if (_context.People == null || _context.Addresses == null)
+            {
+                return NotFound();
+            }
+            var Person = await _context.People.FindAsync(PersonId);
+            if (Person == null)
+            {
+                return NotFound();
+            }
+            
+            // var Address = (from address in Person.Addresses.OfType<Address>() where address.Id == AddressId select address)
+            //     .FirstOrDefault(); // Is there a better way to do this?
+
+            var Address = await _context.Addresses.FindAsync(AddressId);
+
+            if (Address == null)
+            {
+                return NotFound();
+            }
+
+            _context.Addresses.Remove(Address);
             await _context.SaveChangesAsync();
 
             return NoContent();
