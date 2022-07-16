@@ -183,7 +183,7 @@ namespace Testapi.Controllers
             if (person == null)
                 return NotFound();
             
-            person.Addresses.Add(address);
+            await _context.Addresses.AddAsync(address);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetAddress), new { id = address.Id }, address);
