@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Testapi.DataTranserObjects;
+using Testapi.Mappings;
 using Testapi.Models;
 using AutoMapper;
 
@@ -16,7 +17,7 @@ namespace Testapi.Controllers
     public class PeopleController : ControllerBase
     {
         private readonly PeopleContext _context;
-        private static Mapper Mapper = new Mapper(new MapperConfiguration(cfg => cfg.CreateMap<Person, PersonDTO>()));
+        // private static Mapper Mapper = new Mapper(new MapperConfiguration(cfg => cfg.AddProfile(new AutoMapperProfile())));
         private readonly IMapper _mapper;
 
         public PeopleController(PeopleContext context, IMapper mapper)
@@ -34,7 +35,7 @@ namespace Testapi.Controllers
                 return NotFound();
             }
             // return await _context.People.ToListAsync();
-            return await _context.People.Select(x => PersonToDTO(x))
+            return await _context.People.Select(x => _mapper.Map<PersonDTO>(x))
                 .ToListAsync();
         }
 
@@ -64,7 +65,8 @@ namespace Testapi.Controllers
                 return NotFound();
             }
 
-            return PersonToDTO(person);
+            // return PersonToDTO(person);
+            return _mapper.Map<PersonDTO>(person);
         }
 
         // GET: api/People/addresses/5
@@ -166,7 +168,8 @@ namespace Testapi.Controllers
             _context.People.Add(person);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetPerson), new { id = person.Id }, PersonToDTO(person));
+            // return CreatedAtAction(nameof(GetPerson), new { id = person.Id }, PersonToDTO(person));
+            return CreatedAtAction(nameof(GetPerson), new { id = person.Id }, _mapper.Map<PersonDTO>(person));
         }
 
         // POST: api/People/5
@@ -244,6 +247,6 @@ namespace Testapi.Controllers
             return (_context.People?.Any(e => e.Id == id)).GetValueOrDefault();
         }
 
-        private static PersonDTO PersonToDTO(Person todoItem) => Mapper.Map<PersonDTO>(todoItem);
+        // private static PersonDTO PersonToDTO(Person todoItem) => Mapper.Map<PersonDTO>(todoItem);
     }
 }
