@@ -6,7 +6,7 @@ namespace Testapi.Models;
 public class PeopleContext : DbContext
 {
     public PeopleContext(DbContextOptions options) : base(options) { }
-    public PeopleContext( /*DbContextOptions options */ ) /* : base(options) */ { }
+    public PeopleContext() { }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

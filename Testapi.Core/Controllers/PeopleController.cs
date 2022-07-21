@@ -17,7 +17,6 @@ namespace Testapi.Controllers
     public class PeopleController : ControllerBase
     {
         private readonly PeopleContext _context;
-        // private static Mapper Mapper = new Mapper(new MapperConfiguration(cfg => cfg.AddProfile(new AutoMapperProfile())));
         private readonly IMapper _mapper;
 
         public PeopleController(PeopleContext context, IMapper mapper)
@@ -34,7 +33,7 @@ namespace Testapi.Controllers
             {
                 return NotFound();
             }
-            // return await _context.People.ToListAsync();
+
             return await _context.People.Select(x => _mapper.Map<PersonDTO>(x))
                 .ToListAsync();
         }
@@ -65,7 +64,6 @@ namespace Testapi.Controllers
                 return NotFound();
             }
 
-            // return PersonToDTO(person);
             return _mapper.Map<PersonDTO>(person);
         }
 
@@ -104,7 +102,7 @@ namespace Testapi.Controllers
 
             return await _context.Addresses
                 .Where(x => x.PersonId.Equals(person.Id))
-                .ToListAsync(); // Is there a better way to do this?
+                .ToListAsync();
         }
 
         // PUT: api/People/5
@@ -155,7 +153,6 @@ namespace Testapi.Controllers
         }
 
         // POST: api/People
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<PersonDTO>> PostPerson(PersonDTO personDTO)
         {
@@ -168,7 +165,6 @@ namespace Testapi.Controllers
             _context.People.Add(person);
             await _context.SaveChangesAsync();
 
-            // return CreatedAtAction(nameof(GetPerson), new { id = person.Id }, PersonToDTO(person));
             return CreatedAtAction(nameof(GetPerson), new { id = person.Id }, _mapper.Map<PersonDTO>(person));
         }
 
@@ -176,8 +172,6 @@ namespace Testapi.Controllers
         [HttpPost("{id}")]
         public async Task<ActionResult<Address>> PostAddress(int id, Address address)
         {
-            // var person = _mapper.Map<Person>(personDTO);
-
             if (_context.Addresses == null)
             {
                 return Problem("Entity set 'PeopleContext.Addresses'  is null.");
@@ -220,14 +214,12 @@ namespace Testapi.Controllers
             {
                 return NotFound();
             }
+
             var Person = await _context.People.FindAsync(PersonId);
             if (Person == null)
             {
                 return NotFound();
             }
-            
-            // var Address = (from address in Person.Addresses.OfType<Address>() where address.Id == AddressId select address)
-            //     .FirstOrDefault(); // Is there a better way to do this?
 
             var Address = await _context.Addresses.FindAsync(AddressId);
 
@@ -246,7 +238,5 @@ namespace Testapi.Controllers
         {
             return (_context.People?.Any(e => e.Id == id)).GetValueOrDefault();
         }
-
-        // private static PersonDTO PersonToDTO(Person todoItem) => Mapper.Map<PersonDTO>(todoItem);
     }
 }
